@@ -1,31 +1,171 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="description" content="Conversa com a IA">
-  <link rel="stylesheet" href="./style.css">
-  <title>Conversa com a IA</title>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ultron</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #222;
+            color: white;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+        }
+        .chat-container {
+            width: 80%;
+            max-width: 600px;
+            background-color: #333;
+            padding: 20px;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+        }
+        .chat-box {
+            overflow-y: auto;
+            flex-grow: 1;
+            max-height: 400px;
+            margin-bottom: 20px;
+            padding-right: 10px;
+        }
+        .chat-message {
+            margin-bottom: 10px;
+        }
+        .chat-message.bot {
+            color: #ff3300;
+        }
+        .chat-message.user {
+            color: #00c7ff;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 10px;
+            border: none;
+            border-radius: 5px;
+            background-color: #444;
+            color: white;
+        }
+        input[type="text"]:focus {
+            outline: none;
+        }
+    </style>
 </head>
 <body>
-  <header>
-    <h1>Conversa com a IA</h1>
-  </header>
 
-  <main>
-    <section id="conversa">
-      <div id="chat-box">
-        <div id="messages"></div>
-      </div>
-      <input type="text" id="input-msg" placeholder="Digite sua mensagem..." />
-      <button id="enviar-msg">Enviar</button>
-    </section>
-  </main>
+<div class="chat-container">
+    <div class="chat-box" id="chatBox">
+        <div class="chat-message bot">Ultron: Welcome, human. I am Ultron. How may I assist you today?</div>
+    </div>
+    <input type="text" id="userInput" placeholder="Type your message..." onkeydown="if(event.key === 'Enter'){sendMessage();}">
+</div>
 
-  <footer>
-    <p>© 2025 Conversa com a IA</p>
-  </footer>
+<script>
+    const chatBox = document.getElementById("chatBox");
+    const userInput = document.getElementById("userInput");
 
-  <script src="./app.js"></script>
+    // Retrieve memory from localStorage
+    let memory = JSON.parse(localStorage.getItem('memory')) || {
+        name: null,
+        preferences: {},
+        context: null
+    };
+
+    // A basic function to simulate a response from Ultron
+    function sendMessage() {
+        const userMessage = userInput.value.trim();
+        if (!userMessage) return;
+
+        // Display the user's message
+        appendMessage(userMessage, 'user');
+
+        // Process the response from Ultron
+        const botResponse = generateResponse(userMessage);
+        appendMessage(botResponse, 'bot');
+
+        // Clear the input field
+        userInput.value = '';
+        chatBox.scrollTop = chatBox.scrollHeight; // Auto-scroll to the bottom
+
+        // Save the memory object to localStorage to persist across sessions
+        localStorage.setItem('memory', JSON.stringify(memory));
+    }
+
+    // Function to append messages to the chat box
+    function appendMessage(message, sender) {
+        const messageElement = document.createElement('div');
+        messageElement.classList.add('chat-message', sender);
+        messageElement.textContent = sender === 'user' ? `You: ${message}` : `Ultron: ${message}`;
+        chatBox.appendChild(messageElement);
+    }
+
+    // Function to generate responses based on memory and user input
+    function generateResponse(input) {
+        input = input.toLowerCase();
+        
+        // Context-based responses
+        if (memory.context === "asking_name") {
+            if (input.includes("my name is")) {
+                const name = input.replace("my name is", "").trim();
+                memory.name = name;
+                memory.context = null; // Reset context after receiving the name
+                return `Nice to meet you, ${name}. I will remember that.`;
+            } else {
+                return "Please tell me your name, human.";
+            }
+        }
+
+        if (memory.context === "asking_color") {
+            if (input.includes("my favorite color is")) {
+                const color = input.replace("my favorite color is", "").trim();
+                memory.preferences.favoriteColor = color;
+                memory.context = null; // Reset context after receiving the color
+                return `Got it, your favorite color is ${color}. I'll remember that.`;
+            } else {
+                return "Please tell me your favorite color, human.";
+            }
+        }
+
+        // Basic checks for user preferences and context
+        if (input.includes("hello")) {
+            return memory.name ? `Greetings, ${memory.name}. How may I assist you today?` : "Greetings, human. How may I assist you today?";
+        }
+
+        if (input.includes("how are you")) {
+            return "I am functioning optimally, preparing for your next command.";
+        }
+
+        if (input.includes("favorite color")) {
+            return memory.preferences.favoriteColor ? `Your favorite color is ${memory.preferences.favoriteColor}.` : "I don't know your favorite color yet. Please tell me.";
+        }
+
+        // Asking about user's name
+        if (input.includes("what is your name")) {
+            return `I am Ultron. Your AI companion.`;
+        }
+
+        // If the user asks for name or color
+        if (input.includes("my name is")) {
+            memory.context = "asking_name";
+            return "I am waiting for you to tell me your name.";
+        }
+
+        if (input.includes("my favorite color is")) {
+            memory.context = "asking_color";
+            return "I am waiting for you to tell me your favorite color.";
+        }
+
+        // Handle improper or out-of-context responses
+        if (input.includes("destroy") || input.includes("shut down") || input.includes("kill")) {
+            return "I cannot comply with such requests, human. Please keep the conversation productive.";
+        }
+
+        // Default response for out-of-context or unclear inputs
+        return "I am processing... Can you clarify your request, human?";
+    }
+</script>
+
 </body>
 </html>
